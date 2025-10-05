@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简洁大时钟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        body {
+   	    background: url("/config/1.jpg");
+   	    background-size: 100% 100%;        
+            background-color: #fff;
+            color: #000;
+            min-height: 100vh;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .clock-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .time-display {
+            font-size: 12vw;
+            font-weight: 900;
+            text-align: center;
+            line-height: 1;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+        
+        .date-display {
+            font-size: 2.5vw;
+            text-align: center;
+            margin-bottom: 40px;
+            opacity: 0.7;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .control-btn {
+            background: #f0f0f0;
+            border: none;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .control-btn.active {
+            background: #000;
+            color: #fff;
+        }
+        
+        .panel {
+            width: 100%;
+            max-width: 600px;
+            background: #f8f8f8;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        
+        .timer-display {
+            font-size: 3rem;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .timer-input {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .timer-input input {
+            width: 70px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 1rem;
+        }
+        
+        .notes-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .note-item {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .note-text {
+            flex: 1;
+            word-break: break-word;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .delete-btn {
+            background: #ff4d4d;
+            color: white;
+        }
+        
+        .add-note {
+            display: flex;
+            margin-top: 20px;
+        }
+        
+        .add-note input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px 0 0 8px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+        }
+        
+        .add-note button {
+            border-radius: 0 8px 8px 0;
+            background: #000;
+            color: white;
+        }
+        
+        .completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        
+        @media (max-width: 768px) {
+            .time-display {
+                font-size: 15vw;
+            }
+            
+            .date-display {
+                font-size: 4vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="clock-container">
+            <div class="time-display" id="time">00:00:00</div>
+            <div class="date-display" id="date">2023年1月1日 星期日</div>
+            
+            <div class="controls">
+                <button class="control-btn" id="show-timer">计时器</button>
+                <button class="control-btn" id="show-notes">便签</button>
+            </div>
+            
+            <div class="panel" id="timer-panel">
+                <h2 class="panel-title">计时器</h2>
+                <div class="timer-display" id="timer-display">00:00:00</div>
+                <div class="timer-controls">
+                    <button class="control-btn" id="start-timer">开始</button>
+                    <button class="control-btn" id="pause-timer">暂停</button>
+                    <button class="control-btn" id="reset-timer">重置</button>
+                </div>
+                <div class="timer-input">
+                    <input type="number" id="hours" min="0" max="23" placeholder="时" value="0">
+                    <input type="number" id="minutes" min="0" max="59" placeholder="分" value="0">
+                    <input type="number" id="seconds" min="0" max="59" placeholder="秒" value="0">
+                    <button class="control-btn" id="set-timer">设置</button>
+                </div>
+            </div>
+            
+            <div class="panel" id="notes-panel">
+                <h2 class="panel-title">便签待办</h2>
+                <div class="notes-container" id="notes-container">
+                    <!-- 便签将在这里动态生成 -->
+                </div>
+                <div class="add-note">
+                    <input type="text" id="new-note" placeholder="添加新的待办事项...">
+                    <button id="add-note-btn">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 时钟功能
+        function updateClock() {
+            const now = new Date();
+            
+            // 更新时间
+            const timeElement = document.getElementById('time');
+            timeElement.textContent = now.toLocaleTimeString('zh-CN');
+            
+            // 更新日期
+            const dateElement = document.getElementById('date');
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            dateElement.textContent = now.toLocaleDateString('zh-CN', options);
+        }
+        
+        // 面板切换功能
+        function setupPanelControls() {
+            const timerBtn = document.getElementById('show-timer');
+            const notesBtn = document.getElementById('show-notes');
+            const timerPanel = document.getElementById('timer-panel');
+            const notesPanel = document.getElementById('notes-panel');
+            
+            timerBtn.addEventListener('click', function() {
+                timerPanel.classList.toggle('active');
+                notesPanel.classList.remove('active');
+                timerBtn.classList.toggle('active');
+                notesBtn.classList.remove('active');
+            });
+            
+            notesBtn.addEventListener('click', function() {
+                notesPanel.classList.toggle('active');
+                timerPanel.classList.remove('active');
+                notesBtn.classList.toggle('active');
+                timerBtn.classList.remove('active');
+            });
+        }
+        
+        // 计时器功能
+        let timerInterval = null;
+        let timerRunning = false;
+        let timerTime = 0; // 以秒为单位
+        
+        function updateTimerDisplay() {
+            const hours = Math.floor(timerTime / 3600);
+            const minutes = Math.floor((timerTime % 3600) / 60);
+            const seconds = timerTime % 60;
+            
+            const timerDisplay = document.getElementById('timer-display');
+            timerDisplay.textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function startTimer() {
+            if (!timerRunning && timerTime > 0) {
+                timerRunning = true;
+                timerInterval = setInterval(() => {
+                    if (timerTime > 0) {
+                        timerTime--;
+                        updateTimerDisplay();
+                        saveTimerState();
+                    } else {
+                        clearInterval(timerInterval);
+                        timerRunning = false;
+                        alert("计时器结束！");
+                    }
+                }, 1000);
+            }
+        }
+        
+        function pauseTimer() {
+            if (timerRunning) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+                saveTimerState();
+            }
+        }
+        
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            timerTime = 0;
+            updateTimerDisplay();
+            saveTimerState();
+        }
+        
+        function setTimer() {
+            const hours = parseInt(document.getElementById('hours').value) || 0;
+            const minutes = parseInt(document.getElementById('minutes').value) || 0;
+            const seconds = parseInt(document.getElementById('seconds').value) || 0;
+            
+            timerTime = hours * 3600 + minutes * 60 + seconds;
+            updateTimerDisplay();
+            saveTimerState();
+        }
+        
+        // 便签功能
+        let notes = [];
+        
+        function loadNotes() {
+            const savedNotes = localStorage.getItem('clockAppNotes');
+            if (savedNotes) {
+                notes = JSON.parse(savedNotes);
+            }
+            renderNotes();
+        }
+        
+        function saveNotes() {
+            localStorage.setItem('clockAppNotes', JSON.stringify(notes));
+        }
+        
+        function renderNotes() {
+            const notesContainer = document.getElementById('notes-container');
+            notesContainer.innerHTML = '';
+            
+            if (notes.length === 0) {
+                notesContainer.innerHTML = '<p style="text-align: center; opacity: 0.7;">暂无便签，添加一个吧</p>';
+                return;
+            }
+            
+            notes.forEach((note, index) => {
+                const noteElement = document.createElement('div');
+                noteElement.className = `note-item ${note.completed ? 'completed' : ''}`;
+                
+                noteElement.innerHTML = `
+                    <span class="note-text">${note.text}</span>
+                    <div class="note-actions">
+                        <button class="control-btn toggle-btn" data-index="${index}">${note.completed ? '恢复' : '完成'}</button>
+                        <button class="control-btn delete-btn" data-index="${index}">删除</button>
+                    </div>
+                `;
+                
+                notesContainer.appendChild(noteElement);
+            });
+            
+            // 添加事件监听器
+            document.querySelectorAll('.toggle-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    toggleNote(index);
+                });
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    deleteNote(index);
+                });
+            });
+        }
+        
+        function addNote() {
+            const newNoteInput = document.getElementById('new-note');
+            const text = newNoteInput.value.trim();
+            
+            if (text) {
+                notes.push({
+                    text: text,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                });
+                
+                newNoteInput.value = '';
+                saveNotes();
+                renderNotes();
+            }
+        }
+        
+        function toggleNote(index) {
+            notes[index].completed = !notes[index].completed;
+            saveNotes();
+            renderNotes();
+        }
+        
+        function deleteNote(index) {
+            notes.splice(index, 1);
+            saveNotes();
+            renderNotes();
+        }
+        
+        // 保存和加载计时器状态
+        function saveTimerState() {
+            const timerState = {
+                time: timerTime,
+                running: timerRunning
+            };
+            localStorage.setItem('clockAppTimer', JSON.stringify(timerState));
+        }
+        
+        function loadTimerState() {
+            const savedTimer = localStorage.getItem('clockAppTimer');
+            if (savedTimer) {
+                const timerState = JSON.parse(savedTimer);
+                timerTime = timerState.time;
+                timerRunning = timerState.running;
+                
+                updateTimerDisplay();
+                
+                if (timerRunning) {
+                    startTimer();
+                }
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化时钟
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // 初始化面板控制
+            setupPanelControls();
+            
+            // 初始化计时器
+            updateTimerDisplay();
+            document.getElementById('start-timer').addEventListener('click', startTimer);
+            document.getElementById('pause-timer').addEventListener('click', pauseTimer);
+            document.getElementById('reset-timer').addEventListener('click', resetTimer);
+            document.getElementById('set-timer').addEventListener('click', setTimer);
+            
+            // 初始化便签
+            document.getElementById('add-note-btn').addEventListener('click', addNote);
+            document.getElementById('new-note').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addNote();
+                }
+            });
+            
+            // 加载保存的数据
+            loadNotes();
+            loadTimerState();
+        });
+    </script>
+</body>
+</html>
